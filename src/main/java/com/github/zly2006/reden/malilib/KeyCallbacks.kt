@@ -1,18 +1,22 @@
 package com.github.zly2006.reden.malilib
 
+import com.github.zly2006.reden.Reden
 import com.github.zly2006.reden.Sounds
 import com.github.zly2006.reden.access.PlayerData.Companion.data
+import com.github.zly2006.reden.gui.CreditScreen
 import com.github.zly2006.reden.mixinhelper.StructureBlockHelper
-import com.github.zly2006.reden.network.Rollback
 import com.github.zly2006.reden.network.RvcDataS2CPacket
 import com.github.zly2006.reden.network.RvcTrackpointsC2SRequest
+import com.github.zly2006.reden.network.Undo
 import com.github.zly2006.reden.render.BlockBorder
 import com.github.zly2006.reden.report.onFunctionUsed
 import com.github.zly2006.reden.rvc.gui.SelectionListScreen
 import com.github.zly2006.reden.rvc.gui.selectedStructure
 import com.github.zly2006.reden.rvc.remote.github.GithubAuthScreen
+import com.github.zly2006.reden.sponsor.SponsorScreen
 import com.github.zly2006.reden.utils.sendMessage
 import com.github.zly2006.reden.utils.toBlockPos
+import fi.dy.masa.malilib.gui.GuiConfigsBase
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.block.entity.StructureBlockBlockEntity
 import net.minecraft.block.enums.StructureBlockMode
@@ -40,14 +44,14 @@ fun configureKeyCallbacks(mc: MinecraftClient) {
         )
         iEVER_USED_UNDO.booleanValue = true
         if (mc.interactionManager?.currentGameMode == GameMode.CREATIVE) {
-            ClientPlayNetworking.send(Rollback(0))
+            ClientPlayNetworking.send(Undo(0))
             true
         } else false
     }
     REDO_KEY.keybind.setCallback { _, _ ->
         onFunctionUsed("redo")
         if (mc.interactionManager?.currentGameMode == GameMode.CREATIVE) {
-            ClientPlayNetworking.send(Rollback(1))
+            ClientPlayNetworking.send(Undo(1))
             true
         } else false
     }
@@ -158,6 +162,25 @@ fun configureKeyCallbacks(mc: MinecraftClient) {
             }
         }
         mc.messageHandler.onGameMessage(Text.literal("DEBUG_RVC_REQUEST_SYNC_DATA"), false)
+        true
+    }
+    SPONSOR_SCREEN_KEY.keybind.setCallback { _, _ ->
+        mc.setScreen(SponsorScreen())
+        true
+    }
+    CREDIT_SCREEN_KEY.keybind.setCallback { _, _ ->
+        mc.setScreen(CreditScreen())
+        true
+    }
+    DEBUG_VIEW_ALL_CONFIGS.keybind.setCallback { _, _ ->
+        mc.setScreen(object : GuiConfigsBase(
+            10,
+            20,
+            Reden.MOD_ID,
+            null,
+            "reden.widget.config.title") {
+            override fun getConfigs() = ConfigOptionWrapper.createFor(getAllOptions())
+        })
         true
     }
 }
