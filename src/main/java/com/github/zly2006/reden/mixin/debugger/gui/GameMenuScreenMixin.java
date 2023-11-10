@@ -1,7 +1,7 @@
-package com.github.zly2006.reden.mixin.screen;
+package com.github.zly2006.reden.mixin.debugger.gui;
 
 import com.github.zly2006.reden.debugger.gui.ColorButton;
-import com.github.zly2006.reden.debugger.gui.RedenPauseScreen;
+import com.github.zly2006.reden.debugger.gui.DebuggerScreen;
 import com.terraformersmc.modmenu.mixin.AccessorGridWidget;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -36,7 +36,7 @@ public abstract class GameMenuScreenMixin extends Screen {
         if (gridWidget != null) {
             List<Widget> buttons = ((AccessorGridWidget)gridWidget).getChildren();
             ClickableWidget debuggerButton = new ColorButton(10, 10, 20, 20, Text.of("R"), 0xFF008FE1, (lambda) -> {
-                this.client.setScreen(new RedenPauseScreen(Text.of("Reden Debugger")));
+                this.client.setScreen(new DebuggerScreen());
             });
             debuggerButton.setTooltip(Tooltip.of(Text.of("Reden Debugger Screen")));
             buttons.add(debuggerButton);

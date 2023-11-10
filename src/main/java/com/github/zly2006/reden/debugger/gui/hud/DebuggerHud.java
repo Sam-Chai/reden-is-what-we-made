@@ -1,10 +1,8 @@
 package com.github.zly2006.reden.debugger.gui.hud;
 
-import com.github.zly2006.reden.debugger.gui.DebuggerLayout;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
 
 public class DebuggerHud implements HudRenderCallback {
     public static DebuggerHud INSTANCE;

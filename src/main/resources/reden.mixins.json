@@ -70,7 +70,7 @@
     "privacy.MixinLanguageManager",
     "render.MixinBlockModelRenderer",
     "render.MixinWorldRenderer",
-    "screen.GameMenuScreenMixin",
+    "debugger.gui.GameMenuScreenMixin",
     "superRight.chat.ChatHudMixin",
     "superRight.chat.ChatScreenMixin",
     "superRight.chat.VisibleChatHudLineMixin"
