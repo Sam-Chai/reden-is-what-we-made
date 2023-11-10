@@ -16,9 +16,8 @@ public class DebuggerHud implements HudRenderCallback {
     @Override
     public void onHudRender(DrawContext drawContext, float tickDelta) {
         MinecraftClient client = MinecraftClient.getInstance();
-        DebuggerLayout debuggerLayout = new DebuggerLayout(10, 10, client);
         if (visible && client.currentScreen == null) {
-            debuggerLayout.render(drawContext);
+            // todo
         }
 
     }

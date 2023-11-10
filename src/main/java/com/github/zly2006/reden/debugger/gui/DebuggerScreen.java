@@ -29,9 +29,27 @@ public class DebuggerScreen extends BaseOwoScreen<FlowLayout> {
         layout(rootComponent);
         // Buttons
         rootComponent.child(
-                Containers.verticalFlow(Sizing.content(), Sizing.content())
+                Containers.horizontalFlow(Sizing.content(), Sizing.content())
+                        .gap(5)
                         .child(Components.button(
                                 Text.of("Step Info"),
+                                (lambda) -> {}
+                        ))
+                        .child(Components.button(
+                                Text.of("Step Over"),
+                                (lambda) -> {}
+                        ))
+                        .child(Components.button(
+                                Text.of("Step Tick"),
+                                (lambda) -> {}
+                        ))
+                        .child(Components.box(Sizing.fixed(1), Sizing.fixed(20)).color(Color.ofRgb(0xA0A0A0)))
+                        .child(Components.button(
+                                Text.of("Continue"),
+                                (lambda) -> {}
+                        ))
+                        .child(Components.button(
+                                Text.of("Reset"),
                                 (lambda) -> {}
                         ))
                         .padding(Insets.of(10))
@@ -41,7 +59,7 @@ public class DebuggerScreen extends BaseOwoScreen<FlowLayout> {
         );
     }
 
-    public FlowLayout layout(FlowLayout rootComponent) {
+    public void layout(FlowLayout rootComponent) {
         rootComponent.child(
                 Containers.verticalFlow(Sizing.content(), Sizing.content())
                         .gap(1)
@@ -58,8 +76,6 @@ public class DebuggerScreen extends BaseOwoScreen<FlowLayout> {
                         .child(Components.label(Text.of("Type: Breakpoint fired")).shadow(true))
                         .child(Components.label(Text.of("Breakpoint: Block Breakpoint at BlockPos[1,0,0]")).shadow(true))
                         .child(Components.label(Text.of("Breakpoint Type: NC[to], PP[from->to]")).shadow(true))
-
         );
-        return rootComponent;
     }
 }
