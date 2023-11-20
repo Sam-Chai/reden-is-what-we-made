@@ -3,9 +3,11 @@ package com.github.zly2006.reden.debugger.tree
 import com.github.zly2006.reden.Reden
 import com.github.zly2006.reden.debugger.TickStage
 import com.github.zly2006.reden.debugger.disableWatchDog
+import com.github.zly2006.reden.utils.debugLogger
 import com.github.zly2006.reden.utils.server
 import io.netty.util.internal.UnstableApi
 import okhttp3.internal.toHexString
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -64,6 +66,7 @@ class StageTree: Iterator<TickStage> {
         }
 
         while (child?.iter?.hasNext() == false) {
+            child!!.stage.endTask()
             child = child!!.parent
         }
     }
@@ -89,7 +92,7 @@ class StageTree: Iterator<TickStage> {
 
         tickedStages.add(child!!.stage)
         lastReturned = child
-        Reden.LOGGER.trace("[StageTree#next] {}", child)
+        debugLogger("[StageTree#next] $child")
         return lastReturned!!.stage
     }
 
@@ -163,6 +166,7 @@ class StageTree: Iterator<TickStage> {
     }
 
     fun insert2child(parent: TickStage, stage: TickStage) {
+        debugLogger("StageTree.insert2child $stage -> $parent")
         Reden.LOGGER.trace("[StageTree#insert2child] into {} -> {}", parent, stage)
 
         var node = lastReturned
@@ -187,5 +191,24 @@ class StageTree: Iterator<TickStage> {
             // Oops, the tree is empty, we need to update the child node.
             child = node
         }
+    }
+
+    /**
+     * WARNING: DO NOT USE THIS METHOD IF YOU DONT KNOW WHAT IT IS
+     */
+    @ApiStatus.Internal
+    fun resetIterator(stage: TickStage) {
+        debugLogger("StageTree.resetIterator -> $stage")
+        var node = lastReturned
+        while (node != null) {
+            if (node.stage == stage) {
+                break
+            }
+            node = node.parent
+        }
+
+        if (node == null) return
+        if (node.iter == null) return
+        node.iter = stage.children.listIterator(node.iter!!.nextIndex())
     }
 }

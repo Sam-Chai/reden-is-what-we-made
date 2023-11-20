@@ -1,7 +1,7 @@
 package com.github.zly2006.reden;
 
+import com.github.zly2006.reden.clientGlow.ClientGlowKt;
 import com.github.zly2006.reden.debugger.gui.RDebuggerLayoutKt;
-import com.github.zly2006.reden.debugger.gui.hud.DebuggerHud;
 import com.github.zly2006.reden.malilib.KeyCallbacksKt;
 import com.github.zly2006.reden.malilib.MalilibSettingsKt;
 import com.github.zly2006.reden.malilib.data.CommandHotkey;
@@ -11,7 +11,7 @@ import com.github.zly2006.reden.rvc.RvcLocalCommandKt;
 import com.github.zly2006.reden.rvc.gui.RvcHudRenderer;
 import com.github.zly2006.reden.rvc.gui.hud.gameplay.SelectModeHudKt;
 import com.github.zly2006.reden.rvc.tracking.client.ClientTrackingKt;
-import com.github.zly2006.reden.sponsor.SponsorKt;
+import com.github.zly2006.reden.utils.DebugKt;
 import com.google.gson.JsonObject;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.config.ConfigUtils;
@@ -26,7 +26,6 @@ import fi.dy.masa.malilib.util.FileUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 
@@ -37,13 +36,8 @@ import java.nio.file.Files;
 public class RedenClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        new Thread(() -> {
-            // Http IOs
-            ReportKt.initReport();
-            SponsorKt.updateSponsors();
-        }, "Report Worker").start();
         PearlTask.Companion.register();
-//        SelectModeHudKt.registerHud();
+        SelectModeHudKt.registerHud();
         InitializationHandler.getInstance().registerInitializationHandler(() -> {
             RenderEventHandler.getInstance().registerGameOverlayRenderer(RvcHudRenderer.INSTANCE);
             ConfigManager.getInstance().registerConfigHandler("reden", new IConfigHandler() {
@@ -56,6 +50,9 @@ public class RedenClient implements ClientModInitializer {
                         }
                         JsonObject jo = Reden.GSON.fromJson(Files.readString(file.toPath()), JsonObject.class);
                         ConfigUtils.readConfigBase(jo, Reden.MOD_NAME, MalilibSettingsKt.getAllOptions());
+                        if (DebugKt.isDebug()) {
+                            DebugKt.startDebugAppender();
+                        }
                     } catch (IOException e) {
                         save();
                     }
@@ -101,10 +98,11 @@ public class RedenClient implements ClientModInitializer {
             KeyCallbacksKt.configureKeyCallbacks(MinecraftClient.getInstance());
         });
         ClientLifecycleEvents.CLIENT_STARTED.register(ReportKt::reportOnlineMC);
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> RvcLocalCommandKt.register(dispatcher));
-//        RDebuggerLayoutKt.register();
-
-        DebuggerHud.init();
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            RvcLocalCommandKt.register(dispatcher);
+            ClientGlowKt.register(dispatcher);
+        });
+        RDebuggerLayoutKt.register();
     }
 
     public static void saveMalilibOptions() {

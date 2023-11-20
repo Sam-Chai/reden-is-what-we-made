@@ -3,9 +3,9 @@ package com.github.zly2006.reden.report
 import com.github.zly2006.reden.Reden
 import com.github.zly2006.reden.Reden.LOGGER
 import com.github.zly2006.reden.malilib.ALLOW_SOCIAL_FOLLOW
+import com.github.zly2006.reden.malilib.data_BASIC
 import com.github.zly2006.reden.malilib.data_IDENTIFICATION
 import com.github.zly2006.reden.malilib.data_USAGE
-import com.github.zly2006.reden.sponsor.updateSponsors
 import com.github.zly2006.reden.utils.isClient
 import com.github.zly2006.reden.utils.server
 import com.mojang.authlib.minecraft.UserApiService
@@ -47,8 +47,7 @@ class FeatureUsageData(
 )
 
 fun doHeartHeat() {
-    updateSponsors()
-    if (!data_USAGE.booleanValue) return
+    if (!data_USAGE.booleanValue || !data_BASIC.booleanValue) return
     OkHttpClient().newCall(Request.Builder().apply {
         url("https://www.redenmc.com/api/mc/heartbeat")
         @Serializable
@@ -95,14 +94,18 @@ fun doHeartHeat() {
         @Serializable
         class Res(
             val status: String,
-            val shutdown: Boolean
+            val shutdown: Boolean,
         )
 
         val res = jsonIgnoreUnknown.decodeFromString(Res.serializer(), it.body!!.string())
         if (res.shutdown) {
-            throw Error("")
+            throw Error(res.status)
         }
-        featureUsageData.clear()
+        if (it.code == 200) {
+            featureUsageData.clear()
+            if (res.status.startsWith("set-key="))
+                key = res.status.substring(8)
+        }
     }
 }
 
@@ -131,9 +134,6 @@ class ClientMetadataReq(
         val name: String,
         val ip: String
     )
-}
-
-fun initReport() {
 }
 
 private var usedTimes = 0
@@ -186,91 +186,102 @@ fun reportServerStart(server: MinecraftServer) {
 }
 
 fun reportOnlineMC(client: MinecraftClient) {
-    try {
-        @Serializable
-        class ModData(
-            val name: String,
-            val version: String,
-            val modid: String,
-            val authors: List<String>
-        )
-        @Serializable
-        class Req(
-            val name: String,
-            val early_access: Boolean,
-            var online_mode: Boolean,
-            val os: String,
-            val cpus: Int,
-            val mc_version: String,
-            val reden_version: String,
-            val mods: List<ModData>,
-            val servers: List<Map<String, String>>
-        )
-        val serverList = ServerList(client)
-        serverList.loadFile()
-        val req = Req(
-            client.session.username,
-            false,
-            client.userApiService != UserApiService.OFFLINE,
-            System.getProperty("os.name") + " " + System.getProperty("os.version"),
-            Runtime.getRuntime().availableProcessors(),
-            MinecraftVersion.create().name,
-            FabricLoader.getInstance().getModContainer("reden").get().metadata.version.toString(),
-            if (data_IDENTIFICATION.booleanValue) FabricLoader.getInstance().allMods.map {
-                ModData(
-                    it.metadata.name,
-                    it.metadata.version.toString(),
-                    it.metadata.id,
-                    it.metadata.authors.map { it.name + " <" + it.contact.asMap().entries.joinToString() + ">" },
-                )
-            }
-            else listOf(),
-            if (data_IDENTIFICATION.booleanValue) (0 until serverList.size()).map { serverList[it] }.map { mapOf(
-                "name" to it.name,
-                "ip" to it.address,
-            ) }
-            else listOf()
-        )
+    Thread {
         try {
-            client.sessionService.joinServer(
-                client.session.profile,
-                client.session.accessToken,
-                "3cb49a79c3af1f1dba6c56eddd760ac7d50c518a"
+            @Serializable
+            class ModData(
+                val name: String,
+                val version: String,
+                val modid: String,
+                val authors: List<String>
             )
+
+            @Serializable
+            class Req(
+                val name: String,
+                val early_access: Boolean,
+                var online_mode: Boolean,
+                val os: String,
+                val cpus: Int,
+                val mc_version: String,
+                val reden_version: String,
+                val mods: List<ModData>,
+                val servers: List<Map<String, String>>
+            )
+
+            val serverList = ServerList(client)
+            serverList.loadFile()
+            val req = Req(
+                if (data_IDENTIFICATION.booleanValue) client.session.username
+                else "Anonymous",
+                false,
+                client.userApiService != UserApiService.OFFLINE,
+                System.getProperty("os.name") + " " + System.getProperty("os.version"),
+                Runtime.getRuntime().availableProcessors(),
+                MinecraftVersion.create().name,
+                FabricLoader.getInstance().getModContainer("reden").get().metadata.version.toString(),
+                if (data_IDENTIFICATION.booleanValue) FabricLoader.getInstance().allMods.map {
+                    ModData(
+                        it.metadata.name,
+                        it.metadata.version.toString(),
+                        it.metadata.id,
+                        it.metadata.authors.map { it.name + " <" + it.contact.asMap().entries.joinToString() + ">" },
+                    )
+                }
+                else listOf(),
+                if (data_IDENTIFICATION.booleanValue) (0 until serverList.size()).map { serverList[it] }.map {
+                    mapOf(
+                        "name" to it.name,
+                        "ip" to it.address,
+                    )
+                }
+                else listOf()
+            )
+            try {
+                client.sessionService.joinServer(
+                    client.session.profile,
+                    client.session.accessToken,
+                    "3cb49a79c3af1f1dba6c56eddd760ac7d50c518a"
+                )
+            } catch (e: Exception) {
+                LOGGER.debug("", e)
+                req.online_mode = false
+            }
+            @Serializable
+            class Res(
+                val shutdown: Boolean,
+                val key: String,
+                val ip: String,
+                val id: String? = null,
+                val status: String,
+                val username: String? = null,
+                val desc: String,
+            )
+
+            val res =
+                jsonIgnoreUnknown.decodeFromString(Res.serializer(), OkHttpClient().newCall(Request.Builder().apply {
+                    url("https://www.redenmc.com/api/mc/online")
+                    json(req)
+                    ua()
+                }.build()).execute().body!!.string())
+            if (res.shutdown) {
+                throw Error("Client closing due to copyright reasons, please go to https://www.redenmc.com/policy/copyright gor more information")
+            }
+            key = res.key
+            initHeartBeat()
+            LOGGER.info("RedenMC: ${res.desc}")
+            LOGGER.info("key=${res.key}, ip=${res.ip}, id=${res.id}, status=${res.status}, username=${res.username}")
         } catch (e: Exception) {
             LOGGER.debug("", e)
-            req.online_mode = false
         }
-        @Serializable
-        class Res(
-            val shutdown: Boolean,
-            val key: String,
-            val ip: String,
-            val id: String? = null,
-            val status: String,
-            val username: String? = null,
-            val desc: String,
-        )
-
-        val res = jsonIgnoreUnknown.decodeFromString(Res.serializer(), OkHttpClient().newCall(Request.Builder().apply {
-            url("https://www.redenmc.com/api/mc/online")
-            json(req)
-            ua()
-        }.build()).execute().body!!.string())
-        if (res.shutdown) {
-            throw Error("Client closing due to copyright reasons, please go to https://www.redenmc.com/policy/copyright gor more information")
-        }
-        key = res.key
-        initHeartBeat()
-        LOGGER.info("RedenMC: ${res.desc}")
-        LOGGER.info("key=${res.key}, ip=${res.ip}, id=${res.id}, status=${res.status}, username=${res.username}")
-    }
-    catch (e: Exception) { LOGGER.debug("", e) }
+    }.start()
     Runtime.getRuntime().addShutdownHook(Thread {
         try {
-            try {
-                doHeartHeat()
-            } catch (e: Exception) { LOGGER.debug("", e) }
+            if (featureUsageData.isNotEmpty()) doHeartHeat()
+        } catch (e: Exception) {
+            LOGGER.debug("", e)
+        }
+        try {
             @Serializable
             class Req(
                 val key: String
@@ -281,7 +292,8 @@ fun reportOnlineMC(client: MinecraftClient) {
                 ua()
             }.build()).execute().use {
             }
+        } catch (e: Exception) {
+            LOGGER.debug("", e)
         }
-        catch (e: Exception) { LOGGER.debug("", e) }
     })
 }

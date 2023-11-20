@@ -115,5 +115,29 @@ accessible method net/minecraft/world/block/ChainRestrictedNeighborUpdater$Simpl
 accessible method net/minecraft/world/block/ChainRestrictedNeighborUpdater$StateReplacementEntry <init> (Lnet/minecraft/util/math/Direction;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;II)V
 accessible field net/minecraft/entity/ItemEntity STACK Lnet/minecraft/entity/data/TrackedData;
 extendable class net/minecraft/item/ItemStack
-
-
+accessible field net/minecraft/client/gui/screen/Screen client Lnet/minecraft/client/MinecraftClient;
+accessible method net/minecraft/entity/Entity setFlag (IZ)V
+accessible field net/minecraft/command/EntitySelector box Lnet/minecraft/util/math/Box;
+accessible field net/minecraft/command/EntitySelector playerName Ljava/lang/String;
+accessible field net/minecraft/command/EntitySelector uuid Ljava/util/UUID;
+accessible field net/minecraft/command/EntitySelector positionOffset Ljava/util/function/Function;
+accessible method net/minecraft/command/EntitySelector getPositionPredicate (Lnet/minecraft/util/math/Vec3d;)Ljava/util/function/Predicate;
+accessible field net/minecraft/command/EntitySelector senderOnly Z
+accessible field net/minecraft/command/EntitySelector entityFilter Lnet/minecraft/util/TypeFilter;
+accessible method net/minecraft/command/EntitySelector getAppendLimit ()I
+accessible method net/minecraft/client/world/ClientWorld getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
+accessible field net/minecraft/command/EntitySelector sorter Ljava/util/function/BiConsumer;
+accessible class net/minecraft/server/world/ServerChunkManager$ChunkWithHolder
+accessible method net/minecraft/server/world/ThreadedAnvilChunkStorage tickEntityMovement ()V
+accessible method net/minecraft/server/world/ThreadedAnvilChunkStorage entryIterator ()Ljava/lang/Iterable;
+accessible method net/minecraft/server/world/ServerChunkManager$ChunkWithHolder <init> (Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/server/world/ChunkHolder;)V
+accessible method net/minecraft/server/world/ThreadedAnvilChunkStorage shouldTick (Lnet/minecraft/util/math/ChunkPos;)Z
+accessible field net/minecraft/server/world/ServerChunkManager$ChunkWithHolder holder Lnet/minecraft/server/world/ChunkHolder;
+accessible field net/minecraft/server/world/ServerChunkManager$ChunkWithHolder chunk Lnet/minecraft/world/chunk/WorldChunk;
+accessible field net/minecraft/server/world/ServerChunkManager spawnAnimals Z
+accessible field net/minecraft/server/world/ServerChunkManager spawnMonsters Z
+accessible method net/minecraft/world/tick/WorldTickScheduler tick (Ljava/util/function/BiConsumer;)V
+accessible method net/minecraft/server/world/ServerWorld tickBlock (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;)V
+accessible method net/minecraft/server/world/ServerWorld tickFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/fluid/Fluid;)V
+accessible field net/minecraft/server/world/ServerWorld inBlockTick Z
+accessible method net/minecraft/server/world/ServerWorld processSyncedBlockEvents ()V

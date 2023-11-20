@@ -1,5 +1,8 @@
 package com.github.zly2006.reden.debugger
 
+import com.github.zly2006.reden.access.ServerData.Companion.data
+import com.github.zly2006.reden.debugger.stages.ServerRootStage
+import com.github.zly2006.reden.utils.debugLogger
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.text.Text
 
@@ -7,6 +10,7 @@ abstract class TickStage(
     val name: String,
     val parent: TickStage?,
 ) {
+    private var debugChildrenShouldEmpty = false
     init {
         /*
         val nameRegex = Regex("[\\w\\-]+")
@@ -23,9 +27,51 @@ abstract class TickStage(
     open fun readByteBuf(buf: PacketByteBuf) {
     }
 
+    /**
+     * Run this tick stage.
+     *
+     *  Usually, this should call the caller of the target method,
+     *       because in the caller there may have some mixins.
+     */
     open fun tick() {
+        if (debugChildrenShouldEmpty && children.isNotEmpty()) {
+            error("Children should be null!!!!!")
+        }
+        debugChildrenShouldEmpty = false
         children.clear()
     }
 
     open fun reset(): Unit = throw UnsupportedOperationException("Reset not supported for tick stage $name")
+
+    /**
+     * Tick the server until last children is called.
+     * Clawing this method can ensure the TAIL/RETURN injecting point is called after the vanilla logic executed.
+     *
+     * Note: assume that the root stage is [ServerRootStage].
+     */
+    fun yield() {
+        var root = this
+        while (root.parent != null) {
+            root = root.parent!!
+        }
+        root as ServerRootStage
+        val tree = root.server.data().tickStageTree
+        val lastChildren = children.lastOrNull() ?: return
+        debugLogger("StageTree.yield [=> $this")
+        while (tree.hasNext()) {
+            val next = tree.next()
+            next.tick()
+            if (next == lastChildren) {
+                break
+            }
+        }
+
+        debugChildrenShouldEmpty = true
+    }
+
+    open fun endTask() {
+        if (debugChildrenShouldEmpty) {
+            children.clear()
+        }
+    }
 }

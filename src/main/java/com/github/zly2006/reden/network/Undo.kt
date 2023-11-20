@@ -4,8 +4,9 @@ import com.github.zly2006.reden.Reden
 import com.github.zly2006.reden.access.PlayerData
 import com.github.zly2006.reden.access.PlayerData.Companion.data
 import com.github.zly2006.reden.mixinhelper.UpdateMonitorHelper
-import com.github.zly2006.reden.utils.*
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import com.github.zly2006.reden.utils.debugLogger
+import com.github.zly2006.reden.utils.server
+import com.github.zly2006.reden.utils.setBlockNoPP
 import net.fabricmc.fabric.api.networking.v1.FabricPacket
 import net.fabricmc.fabric.api.networking.v1.PacketType
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -29,10 +30,10 @@ class Undo(
 
     companion object {
         val id = Reden.identifier("undo")
-        private val pType = PacketType.create(id) {
+        val pType = PacketType.create(id) {
             Undo(it.readVarInt())
         }
-        private fun operate(world: ServerWorld, record: PlayerData.UndoRedoRecord, redoRecord: PlayerData.RedoRecord?, playerPos: Long) {
+        private fun operate(world: ServerWorld, record: PlayerData.UndoRedoRecord, redoRecord: PlayerData.RedoRecord?) {
             record.data.forEach { (posLong, entry) ->
                 val pos = BlockPos.fromLong(posLong)
                 debugLogger("undo ${BlockPos.fromLong(posLong)}, ${entry.state}")
@@ -133,7 +134,7 @@ class Undo(
                                     entities.clear()
                                 }
                             )
-                            operate(player.serverWorld, undoRecord, view.redo.last(), player.blockPos.asLong())
+                            operate(player.serverWorld, undoRecord, view.redo.last())
                             sendStatus(0)
                         }
                     } ?: sendStatus(2)
@@ -141,29 +142,13 @@ class Undo(
                     1 -> view.redo.lastValid()?.let {
                         view.redo.removeLast()
                         server.execute {
-                            operate(player.serverWorld, it, null, player.blockPos.asLong())
+                            operate(player.serverWorld, it, null)
                             view.undo.add(it.undoRecord)
                             sendStatus(1)
                         }
                     } ?: sendStatus(2)
 
                     else -> sendStatus(65536)
-                }
-            }
-            if (isClient) {
-                ClientPlayNetworking.registerGlobalReceiver(pType) { packet, player, res ->
-                    player.sendMessage(
-                        when (packet.status) {
-                            0 -> translateMessage("undo", "rollback_success")
-                            1 -> translateMessage("undo", "restore_success")
-                            2 -> translateMessage("undo", "no_blocks_info")
-                            16 -> translateMessage("undo", "no_permission")
-                            32 -> translateMessage("undo", "not_recording")
-                            64 -> translateMessage("undo", "busy")
-                            65536 -> translateMessage("undo", "unknown_error")
-                            else -> translateMessage("undo", "unknown_status")
-                        }
-                    )
                 }
             }
         }

@@ -3,6 +3,7 @@ package com.github.zly2006.reden.malilib
 import com.github.zly2006.reden.Reden
 import com.github.zly2006.reden.Sounds
 import com.github.zly2006.reden.access.PlayerData.Companion.data
+import com.github.zly2006.reden.access.ServerData.Companion.serverData
 import com.github.zly2006.reden.gui.CreditScreen
 import com.github.zly2006.reden.mixinhelper.StructureBlockHelper
 import com.github.zly2006.reden.network.RvcDataS2CPacket
@@ -14,8 +15,10 @@ import com.github.zly2006.reden.rvc.gui.SelectionListScreen
 import com.github.zly2006.reden.rvc.gui.selectedStructure
 import com.github.zly2006.reden.rvc.remote.github.GithubAuthScreen
 import com.github.zly2006.reden.sponsor.SponsorScreen
+import com.github.zly2006.reden.utils.red
 import com.github.zly2006.reden.utils.sendMessage
 import com.github.zly2006.reden.utils.toBlockPos
+import com.github.zly2006.reden.utils.translateMessage
 import fi.dy.masa.malilib.gui.GuiConfigsBase
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.block.entity.StructureBlockBlockEntity
@@ -33,20 +36,38 @@ fun configureKeyCallbacks(mc: MinecraftClient) {
         mc.setScreen(GuiConfigs())
         true
     }
+    var undoEasterEggLock = false
     UNDO_KEY.keybind.setCallback { _, _ ->
+        if (undoEasterEggLock) {
+            mc.player?.sendMessage(translateMessage("undo", "busy"))
+            return@setCallback false
+        }
+        if (mc.serverData()?.featureSet?.contains("undo") != true) {
+            mc.player?.sendMessage(Text.literal("Sorry, this server doesn't support undo.").red(), true)
+            return@setCallback false
+        }
+        if (mc.interactionManager?.currentGameMode != GameMode.CREATIVE)
+            return@setCallback false
         onFunctionUsed("undo")
-        val playSound = Random.nextInt(100) < EASTER_EGG_RATE.integerValue
-        if (playSound) mc.world!!.playSound(
-            mc.player,
-            mc.player!!.blockPos,
-            Sounds.THE_WORLD,
-            SoundCategory.BLOCKS
-        )
         iEVER_USED_UNDO.booleanValue = true
-        if (mc.interactionManager?.currentGameMode == GameMode.CREATIVE) {
+        val playSound = Random.nextInt(100) < EASTER_EGG_RATE.integerValue
+        if (playSound) {
+            mc.world!!.playSound(
+                mc.player,
+                mc.player!!.blockPos,
+                Sounds.THE_WORLD,
+                SoundCategory.BLOCKS
+            )
+            undoEasterEggLock = true
+            Thread {
+                Thread.sleep(2000)
+                undoEasterEggLock = false
+                ClientPlayNetworking.send(Undo(0))
+            }.start()
+        }
+        else
             ClientPlayNetworking.send(Undo(0))
-            true
-        } else false
+        true
     }
     REDO_KEY.keybind.setCallback { _, _ ->
         onFunctionUsed("redo")

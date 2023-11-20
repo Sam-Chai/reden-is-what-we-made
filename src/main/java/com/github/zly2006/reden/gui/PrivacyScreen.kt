@@ -9,6 +9,7 @@ import io.wispforest.owo.ui.base.BaseOwoScreen
 import io.wispforest.owo.ui.component.Components
 import io.wispforest.owo.ui.container.Containers
 import io.wispforest.owo.ui.container.FlowLayout
+import io.wispforest.owo.ui.container.ScrollContainer.Scrollbar
 import io.wispforest.owo.ui.core.*
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
@@ -26,7 +27,9 @@ class PrivacyScreen(val parent: Screen? = null): BaseOwoScreen<FlowLayout>() {
                 .shadow(true)
                 .margins(Insets.of(10)))
         val content = Containers.verticalFlow(Sizing.fill(100), Sizing.content())
-        rootComponent.child(Containers.verticalScroll(Sizing.fill(70), Sizing.fill(80), content))
+        rootComponent.child(Containers.verticalScroll(Sizing.fill(70), Sizing.fill(80), content).apply {
+            scrollbar(Scrollbar.vanillaFlat())
+        })
 
         content.child(Components.label(Text.translatable("reden.widget.privacy.desc"))
             .horizontalTextAlignment(HorizontalAlignment.LEFT)
@@ -37,17 +40,17 @@ class PrivacyScreen(val parent: Screen? = null): BaseOwoScreen<FlowLayout>() {
             RedenClient.saveMalilibOptions()
             this.close()
         })
-        content.child(Components.smallCheckbox(Text.literal("Basic System Data")).checked(true).apply {
+        content.child(Components.smallCheckbox(Text.literal("Basic System Data")).checked(data_BASIC.booleanValue).apply {
             this.onChanged().subscribe {
                 data_BASIC.booleanValue = it
             }
         })
-        content.child(Components.smallCheckbox(Text.literal("Usage Data")).checked(true).apply {
+        content.child(Components.smallCheckbox(Text.literal("Usage Data")).checked(data_USAGE.booleanValue).apply {
             this.onChanged().subscribe {
                 data_USAGE.booleanValue = it
             }
         })
-        content.child(Components.smallCheckbox(Text.literal("Identification Data")).checked(true).apply {
+        content.child(Components.smallCheckbox(Text.literal("Identification Data")).checked(data_IDENTIFICATION.booleanValue).apply {
             this.onChanged().subscribe {
                 data_IDENTIFICATION.booleanValue = it
             }

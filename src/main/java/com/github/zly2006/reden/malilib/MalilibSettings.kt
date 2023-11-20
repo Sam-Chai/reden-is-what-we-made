@@ -5,6 +5,8 @@ package com.github.zly2006.reden.malilib
 import com.github.zly2006.reden.malilib.options.*
 import com.github.zly2006.reden.render.SolidFaceRenderer.ShapePredicateOptionEntry
 import com.github.zly2006.reden.utils.isClient
+import com.github.zly2006.reden.utils.startDebugAppender
+import com.github.zly2006.reden.utils.stopDebugAppender
 import fi.dy.masa.malilib.config.HudAlignment
 import fi.dy.masa.malilib.config.IConfigBase
 import fi.dy.masa.malilib.config.options.ConfigBase
@@ -48,8 +50,6 @@ private fun <T : IConfigBase?> ConfigBase<T>.hidden() = this.apply(HIDDEN_TAB::a
 @JvmField val REDEN_CONFIG_KEY = RedenConfigHotkey("redenConfigKey", "R,C").generic().hotkey()
 @JvmField val SELECTION_TOOL = RedenConfigString("selectionTool", "minecraft:blaze_rod").generic()
 @JvmField val HUD_POSITION = ConfigOptionList("hudPosition", HudAlignment.BOTTOM_LEFT, "").generic()
-@JvmField val ALLOW_COPYRIGHT_CHECK = RedenConfigBoolean("allowCopyrightCheck", true).generic()
-@JvmField val SECURITY_COMMIT = RedenConfigBoolean("securityCommit", false).generic()
 @JvmField val NO_TIME_OUT = RedenConfigBoolean("noTimeOut", false).generic()
 @JvmField val BLOCK_BORDER_ALPHA = RedenConfigFloat("blockBorderAlpha", 0.1f, 0f, 1f).generic()
 @JvmField val UNDO_KEY = RedenConfigHotkey("rollbackKey", "LEFT_CONTROL,Z").generic().hotkey()
@@ -58,6 +58,7 @@ private fun <T : IConfigBase?> ConfigBase<T>.hidden() = this.apply(HIDDEN_TAB::a
 @JvmField val UNDO_CHEATING_ONLY = RedenConfigBoolean("undoCheatingOnly", true).generic()
 @JvmField val MAX_RENDER_DISTANCE = RedenConfigInteger("maxRenderDistance", 48).generic()
 @JvmField val SOLID_FACE_RENDERER = RedenConfigBoolean("solidFaceRenderer", false).generic()
+@JvmField val ENABLE_CLIENT_GLOW = RedenConfigBooleanHotkeyed("enableClientGlow", true, "LEFT_CONTROL,G").hotkey().generic()
 @JvmField val SOLID_FACE_SHAPE_PREDICATE = RedenConfigOptionList("solidFaceShapePredicate", ShapePredicateOptionEntry.FULL).generic()
 @JvmField val EASTER_EGG_RATE = RedenConfigInteger("easterEggRate", 3, 0, 100).generic()
 // RVC
@@ -76,7 +77,10 @@ private fun <T : IConfigBase?> ConfigBase<T>.hidden() = this.apply(HIDDEN_TAB::a
 @JvmField val STRUCTURE_BLOCK_SAVE = RedenConfigHotkey("structureBlockSave", "LEFT_CONTROL,S").sr().hotkey()
 @JvmField val RUN_COMMAND = RedenConfigCommandHotkeyList("runCommand").sr()
 // Debug
-@JvmField val DEBUG_LOGGER = RedenConfigBoolean("debugLogger", false).debug()
+@JvmField val DEBUG_LOGGER = RedenConfigBoolean("debugLogger", false) {
+    if (booleanValue) startDebugAppender()
+    else stopDebugAppender()
+}.debug()
 @JvmField val DEBUG_PACKET_LOGGER = RedenConfigBoolean("debugPacketLogger", false).debug()
 @JvmField val DEBUG_TAG_BLOCK_POS = RedenConfigHotkey("debugTagBlockPos", "LEFT_CONTROL,LEFT_SHIFT,T").debug().hotkey()
 @JvmField val DEBUG_PREVIEW_UNDO = RedenConfigHotkey("debugPreviewUndo", "LEFT_CONTROL,LEFT_SHIFT,Z").debug().hotkey()
@@ -97,6 +101,6 @@ private fun <T : IConfigBase?> ConfigBase<T>.hidden() = this.apply(HIDDEN_TAB::a
 @JvmField val iPRIVACY_SETTING_SHOWN = RedenConfigBoolean("iPrivacySettingShown", false).hidden()
 @JvmField val data_BASIC = RedenConfigBoolean("dataBasic", true).hidden()
 @JvmField val data_USAGE = RedenConfigBoolean("dataUsage", true).hidden()
-@JvmField val data_IDENTIFICATION = RedenConfigBoolean("dataIdentification", true).hidden()
+@JvmField val data_IDENTIFICATION = RedenConfigBoolean("dataIdentification", false).hidden()
 
 fun getAllOptions() = GENERIC_TAB + RVC_TAB + MICRO_TICK_TAB + SUPER_RIGHT_TAB + DEBUG_TAB + HIDDEN_TAB

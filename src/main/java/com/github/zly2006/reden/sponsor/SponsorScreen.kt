@@ -13,19 +13,25 @@ import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
-class SponsorScreen(val parent: Screen? = null): BaseOwoScreen<FlowLayout>() {
+class SponsorScreen(val parent: Screen? = null, private val loadIfNull: Boolean = true): BaseOwoScreen<FlowLayout>() {
     override fun createAdapter() = OwoUIAdapter.create(this, Containers::verticalFlow)!!
 
     override fun build(rootComponent: FlowLayout) {
         rootComponent.horizontalAlignment(HorizontalAlignment.CENTER)
         rootComponent.child(Components.label(Text.literal("Reden's Sponsors")))
         rootComponent.child(Components.label(Text.literal("We are very grateful to the following people for their support.").formatted(Formatting.GRAY)))
-        if (sponsors.isEmpty()) {
-            rootComponent.child(Components.label(Text.literal("Sorry, failed to load sponsors.").formatted(Formatting.RED)))
+        if (sponsors == null) {
+            if (loadIfNull) {
+                rootComponent.child(Components.label(Text.literal("Loading sponsors...").formatted(Formatting.GRAY)))
+                updateSponsors()
+            }
+            else {
+                rootComponent.child(Components.label(Text.literal("Sorry, failed to load sponsors.").formatted(Formatting.RED)))
+            }
         }
         else {
             val list = Containers.verticalFlow(Sizing.fill(100), Sizing.content())
-            sponsors.forEach {
+            sponsors!!.forEach {
                 list.child(Components.label(Text.literal(it.name)).shadow(true).margins(Insets.top(10)))
                 list.child(Components.label(Text.literal((it.detail ?: "¥${it.amount}") + it.message).formatted(Formatting.GRAY)))
             }
